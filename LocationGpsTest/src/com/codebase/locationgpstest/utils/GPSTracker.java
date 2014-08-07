@@ -8,11 +8,14 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.codebase.locationgpstest.app.LocationApplication;
 
 public class GPSTracker extends Service implements LocationListener {
 
@@ -32,10 +35,10 @@ public class GPSTracker extends Service implements LocationListener {
 	double longitude; // longitude
 
 	// The minimum distance to change Updates in meters
-	private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 10; // 10 meters
+	private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 1; // 10 meters
 
 	// The minimum time between updates in milliseconds
-	private static final long MIN_TIME_BW_UPDATES = 1000 * 60 * 1; // 1 minute
+	private static final long MIN_TIME_BW_UPDATES = 10; // 1 minute
 
 	// Declaring a Location Manager
 	protected LocationManager locationManager;
@@ -112,6 +115,7 @@ public class GPSTracker extends Service implements LocationListener {
 	 * Calling this function will stop using GPS in your app
 	 * */
 	public void stopUsingGPS(){
+		System.out.println("Stop using GPS");
 		if(locationManager != null){
 			locationManager.removeUpdates(GPSTracker.this);
 		}		
@@ -192,6 +196,11 @@ public class GPSTracker extends Service implements LocationListener {
 		
 		Log.e("Location found","Location Found");
 		System.out.println("Location is "+location);
+		String locationProvider = location.getProvider();
+		String locationLongitude = ""+location.getLongitude();
+		String locationLatitude = ""+location.getLatitude();
+		String locationDetails = String.format("Provider is %s longitude %s latitude %s",locationProvider,locationLongitude,locationLatitude);
+		LocationApplication.makeToast(locationDetails);
 		
 	}
 
@@ -209,5 +218,8 @@ public class GPSTracker extends Service implements LocationListener {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	
+	
 
 }

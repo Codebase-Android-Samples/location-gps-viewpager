@@ -21,7 +21,7 @@ import android.view.ViewGroup;
 import com.codebase.locationgpstest.utils.core.ResourceChecker;
 import com.codebase.locationgpstest.utils.core.ResourceChecker.Resource;
 
-public class MainActivity extends Activity implements ActionBar.TabListener {
+public class MainActivity extends BaseActivity implements ActionBar.TabListener {
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -53,6 +53,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		// Set up the ViewPager with the sections adapter.
 		mViewPager = (ViewPager) findViewById(R.id.pager);
 		mViewPager.setAdapter(mSectionsPagerAdapter);
+		mViewPager.setOffscreenPageLimit(2);
 
 		// When swiping between different sections, select the corresponding
 		// tab. We can also use ActionBar.Tab#select() to do this if we have
@@ -77,10 +78,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 //		}
 		
 		
-		ResourceChecker resourceChecker = new ResourceChecker(this);
-		
-		
-		resourceChecker.check(new Resource[]{Resource.GPS});
+//		ResourceChecker resourceChecker = new ResourceChecker(this);
+//		
+//		
+//		resourceChecker.check(new Resource[]{Resource.GPS});
 	}
 
 	
@@ -120,7 +121,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			// Return a PlaceholderFragment (defined as a static inner class
 			// below).
 			
-			
+			Log.d("Tab test","Get Item");
 			if(position==2)
 			{
 				return SettingsFragment.newInstance(position+1);
@@ -183,7 +184,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 				Bundle savedInstanceState) {
 			View rootView = inflater.inflate(R.layout.fragment_main, container,
 					false);
-			System.out.println("Loaded fragment" + this.fragmentNumber);
+			
 			return rootView;
 		}
 	}

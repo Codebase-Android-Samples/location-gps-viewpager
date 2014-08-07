@@ -15,6 +15,7 @@ import android.content.IntentFilter;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.provider.Settings;
 
 public class ResourceChecker {
@@ -46,7 +47,7 @@ public class ResourceChecker {
                 if (resourcesList.contains(Resource.GPS) && !isGPSActivated(activity)) {
                         new AlertDialog.Builder(activity).setMessage("GPS required.").setCancelable(false).setPositiveButton("GPS", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-                                        activity.startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                                      ResourceChecker.openGPSSettings(activity);
                                 }
                         }).setNegativeButton("Exit", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
@@ -96,18 +97,56 @@ public class ResourceChecker {
 
         /* PRIVATE */
 
-        private boolean isGPSActivated(Context context) {
+        public  static boolean isGPSActivated(Context context) {
+        	
+        		
                 return ((LocationManager) context.getSystemService(Context.LOCATION_SERVICE)).isProviderEnabled(LocationManager.GPS_PROVIDER);
         }
 
-        private boolean isBluetoothActivated(Context context) {
+        public static boolean isBluetoothActivated(Context context) {
                 return BluetoothAdapter.getDefaultAdapter().isEnabled();
         }
 
-        private boolean isNetworkActivated(Context context) {
+        public static boolean isNetworkActivated(Context context) {
                 ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
                 NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
                 return networkInfo != null && networkInfo.isConnected();
         }
+        
+        public static void turnGPSOn(Context context)
+    	{
+    	     Intent intent = new Intent("android.location.GPS_ENABLED_CHANGE");
+    	     intent.putExtra("enabled", true);
+    	     context.sendBroadcast(intent);
 
+    	    String provider = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+    	    if(!provider.contains("gps")){ //if gps is disabled
+    	        final Intent poke = new Intent();
+    	        poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider"); 
+    	        poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
+    	        poke.setData(Uri.parse("3")); 
+    	        context.sendBroadcast(poke);
+
+
+    	    }
+    	}
+    	// automatic turn off the gps
+    	public static void turnGPSOff(Context context)
+    	{
+    	    String provider = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+    	    if(provider.contains("gps")){ //if gps is enabled
+    	        final Intent poke = new Intent();
+    	        poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
+    	        poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
+    	        poke.setData(Uri.parse("3")); 
+    	        poke.putExtra("enabled", false);
+    	        context.sendBroadcast(poke);
+    	    }
+    	}
+    	
+    	public static void openGPSSettings(Activity activity)
+    	{
+    		 activity.startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+    	}
+        
 }

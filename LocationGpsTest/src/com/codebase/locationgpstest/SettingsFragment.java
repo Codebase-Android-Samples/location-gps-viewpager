@@ -1,5 +1,6 @@
 package com.codebase.locationgpstest;
 
+import com.codebase.locationgpstest.app.LocationApplication;
 import com.codebase.locationgpstest.utils.GPSTracker;
 
 import android.app.Fragment;
@@ -16,6 +17,11 @@ public class SettingsFragment extends Fragment {
 	ToggleButton toggleButtonLocationScan;
 	private int fragmentNumber;
 	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+	}
+	@Override	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
@@ -23,7 +29,7 @@ public class SettingsFragment extends Fragment {
 		View rootView = inflater.inflate(R.layout.settings_main, container,
 				false);
 		intializeControls(rootView);
-		Log.e(LocationConstants.TAG_PROJECT,"onCreateView");
+		Log.e(LocationConstants.TAG_PROJECT,"onCreateView of Settings fragment");
 		return rootView;
 		// return super.onCreateView(inflater, container, savedInstanceState);
 	}
@@ -39,6 +45,8 @@ public class SettingsFragment extends Fragment {
 				Toast.makeText(getActivity(), "Button state is "
 						+ ((ToggleButton) toggleButton).isChecked(),
 						Toast.LENGTH_SHORT).show();
+				
+				
 
 			}
 		});
@@ -76,8 +84,8 @@ public class SettingsFragment extends Fragment {
 		Log.e(LocationConstants.TAG_PROJECT,"settings fragment is visible "+visible);
 
         if (visible) {
-            GPSTracker tracker = new GPSTracker(getActivity());
-            
+            GPSTracker tracker = new GPSTracker(LocationApplication.getAppContext());
+
         }
     }
 }
