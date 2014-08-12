@@ -41,40 +41,43 @@ import com.codebase.locationgpstest.utils.core.ResourceChecker;
 
 public class LocationUpdater extends Service implements LocationListener {
 
-	public static LocationUpdater locationUpdaterSingleInstance = null;
-
-	private Context appContext;
-
-	private String currentLocationUpdateProvider;
-	private long DELAY_IN_NEXT_SCAN = 1000 * 60 * 1;
-	private long LOCATION_UPDATE_FREQUENCY = 0;
-
-	private float LOCATION_UPDATE_MIN_DISTANCE = 0;
-	private LocationUpdateListner locationListener;
 	private LocationManager locationManager;
 
 	private Handler locationUpdateHandler;
 
-	private LocationUpdater(Context context) {
-		// TODO Auto-generated constructor stub
-		this.appContext = context;
-		this.locationManager = (LocationManager) appContext
-				.getSystemService(LOCATION_SERVICE);
-		this.locationUpdateHandler = new Handler();
-		LocationApplication.LogError("locationUpdateHandler Constructor");
+	private long LOCATION_UPDATE_FREQUENCY = 1000 * 60 * 1;
+	private float LOCATION_UPDATE_MIN_DISTANCE = 0;
+	private long DELAY_IN_NEXT_SCAN = 1000 * 60 * 1;
 
-		setUpScanning(false);
+	public static LocationUpdater locationUpdaterSingleInstance = null;
+	private Context appContext;
+	private String currentLocationUpdateProvider;
+
+	private LocationUpdateListner locationListener;
+
+	@Override
+	public void onLocationChanged(Location location) {
+		// TODO Auto-generated method stub
+		
+		LocationApplication.LogError("On Location Found");
+		locationListener.onLocationUpdate(getBestLocationOnUpdate(location));
+		setDelayForNextScan();
 	}
 
-	private String getAvailableLocationProvider() {
+	private void setDelayForNextScan() {
 
-		currentLocationUpdateProvider = LocationManager.NETWORK_PROVIDER;
-		if (this.isGPSLocationUpdatesPossible()) {
-			currentLocationUpdateProvider = LocationManager.GPS_PROVIDER;
-		} else if (this.isNetworkLocationUpdatesPossible()) {
-			currentLocationUpdateProvider = LocationManager.NETWORK_PROVIDER;
-		}
-		return currentLocationUpdateProvider;
+		locationUpdateHandler.removeCallbacksAndMessages(null);
+
+		locationUpdateHandler.postDelayed(new Runnable() {
+
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				LocationApplication.LogError("Time set for next scan ended");
+				setUpScanning(true);
+
+			}
+		}, LOCATION_UPDATE_FREQUENCY + (LOCATION_UPDATE_FREQUENCY / 3));
 	}
 
 	private Location getBestLocationOnUpdate(Location aLocation) {
@@ -110,48 +113,6 @@ public class LocationUpdater extends Service implements LocationListener {
 		return lastLocation;
 	}
 
-	private String getSwitchedProvider() {
-		LocationApplication.LogError("Current location provide is "
-				+ currentLocationUpdateProvider);
-
-		if (currentLocationUpdateProvider == null)
-			return getAvailableLocationProvider();
-		if (currentLocationUpdateProvider
-				.equalsIgnoreCase(LocationManager.GPS_PROVIDER)) {
-			currentLocationUpdateProvider = LocationManager.NETWORK_PROVIDER;
-		} else {
-			currentLocationUpdateProvider = LocationManager.GPS_PROVIDER;
-		}
-		return currentLocationUpdateProvider;
-	}
-
-	private boolean isGPSLocationUpdatesPossible() {
-		return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-
-	}
-
-	private boolean isNetworkLocationUpdatesPossible() {
-
-		// getting network status
-		return locationManager
-				.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-	}
-
-	@Override
-	public IBinder onBind(Intent intent) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void onLocationChanged(Location location) {
-		// TODO Auto-generated method stub
-		
-		LocationApplication.LogError("On Location Found");
-		locationListener.onLocationUpdate(getBestLocationOnUpdate(location));
-		setDelayForNextScan();
-	}
-
 	@Override
 	public void onProviderDisabled(String provider) {
 		// TODO Auto-generated method stub
@@ -169,7 +130,7 @@ public class LocationUpdater extends Service implements LocationListener {
 				.LogError("onProviderEnabled povider is " + provider);
 
 	}
-	
+
 	@Override
 	public void onStatusChanged(String provider, int status, Bundle extras) {
 		// TODO Auto-generated method stub
@@ -177,21 +138,22 @@ public class LocationUpdater extends Service implements LocationListener {
 		LocationApplication.LogError("onStatusChanged povider is " + provider);
 
 	}
-	
-	private void setDelayForNextScan() {
 
-		stopLocationScanning();
+	@Override
+	public IBinder onBind(Intent intent) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-		locationUpdateHandler.postDelayed(new Runnable() {
+	private LocationUpdater(Context context) {
+		// TODO Auto-generated constructor stub
+		this.appContext = context;
+		this.locationManager = (LocationManager) appContext
+				.getSystemService(LOCATION_SERVICE);
+		this.locationUpdateHandler = new Handler();
+		LocationApplication.LogError("locationUpdateHandler Constructor");
 
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				LocationApplication.LogError("Time set for next scan ended");
-				setUpScanning(false);
-
-			}
-		}, DELAY_IN_NEXT_SCAN);
+		setUpScanning(false);
 	}
 
 	private void setUpScanning(boolean forceToAutoSwitchProviderAfterTimeout) {
@@ -230,6 +192,69 @@ public class LocationUpdater extends Service implements LocationListener {
 		locationManager.removeUpdates(this);
 
 	}
+	
+	public static void stopScanning(Context context)
+	{
+		getSharedLocationUpdater(context).stopLocationScanning();
+	}
+	
+	public static void startScanning(Context context,boolean switchProvider)
+	{
+		getSharedLocationUpdater(context).setUpScanning(switchProvider);
+	}
+
+	private String getSwitchedProvider() {
+		LocationApplication.LogError("Current location provide is "
+				+ currentLocationUpdateProvider);
+
+		if (currentLocationUpdateProvider == null)
+			return getAvailableLocationProvider();
+		if (currentLocationUpdateProvider
+				.equalsIgnoreCase(LocationManager.GPS_PROVIDER)) {
+			currentLocationUpdateProvider = LocationManager.NETWORK_PROVIDER;
+		} else {
+			currentLocationUpdateProvider = LocationManager.GPS_PROVIDER;
+		}
+		return currentLocationUpdateProvider;
+	}
+
+	private String getAvailableLocationProvider() {
+
+		currentLocationUpdateProvider = LocationManager.NETWORK_PROVIDER;
+		if (this.isGPSLocationUpdatesPossible()) {
+			currentLocationUpdateProvider = LocationManager.GPS_PROVIDER;
+		} else if (this.isNetworkLocationUpdatesPossible()) {
+			currentLocationUpdateProvider = LocationManager.NETWORK_PROVIDER;
+		}
+		return currentLocationUpdateProvider;
+	}
+
+	public static LocationUpdater getSharedLocationUpdater(Context context) {
+		if (locationUpdaterSingleInstance == null) {
+			locationUpdaterSingleInstance = new LocationUpdater(context);
+		}
+
+		return locationUpdaterSingleInstance;
+	}
+
+	private boolean isNetworkLocationUpdatesPossible() {
+
+		// getting network status
+		return locationManager
+				.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+	}
+
+	private boolean isGPSLocationUpdatesPossible() {
+		return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+	}
+
+	public static void getUpdate(Context context,
+			LocationUpdateListner aLocationListener) {
+		LocationUpdater locationUpdater = LocationUpdater
+				.getSharedLocationUpdater(context);
+		locationUpdater.locationListener = aLocationListener;
+	}
 
 	public static void checkForGpsWithAlert(final Activity activity,
 			String message, String goToSettingsButtonTitle,
@@ -264,21 +289,6 @@ public class LocationUpdater extends Service implements LocationListener {
 		}
 	}
 
-	public static LocationUpdater getSharedLocationUpdater(Context context) {
-		if (locationUpdaterSingleInstance == null) {
-			locationUpdaterSingleInstance = new LocationUpdater(context);
-		}
-
-		return locationUpdaterSingleInstance;
-	}
-
-	public static void getUpdate(Context context,
-			LocationUpdateListner aLocationListener) {
-		LocationUpdater locationUpdater = LocationUpdater
-				.getSharedLocationUpdater(context);
-		locationUpdater.locationListener = aLocationListener;
-	}
-
 	public static boolean isGPSActivated(Context context) {
 
 		return ((LocationManager) context
@@ -289,16 +299,6 @@ public class LocationUpdater extends Service implements LocationListener {
 	public static void openGPSSettings(Activity activity) {
 		activity.startActivity(new Intent(
 				Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-	}
-
-	public static void startScanning(Context context,boolean switchProvider)
-	{
-		getSharedLocationUpdater(context).setUpScanning(switchProvider);
-	}
-
-	public static void stopScanning(Context context)
-	{
-		getSharedLocationUpdater(context).stopLocationScanning();
 	}
 
 	private static void toastGPSStatus(Context context) {
