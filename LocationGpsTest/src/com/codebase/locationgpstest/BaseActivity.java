@@ -23,21 +23,7 @@ public class BaseActivity extends Activity {
 	protected void onResume() {
 		// TODO Auto-generated method stub
 		super.onResume();
-		if(!ResourceChecker.isGPSActivated(BaseActivity.this))
-		{
-			 new AlertDialog.Builder(BaseActivity.this).setMessage("GPS required.").setCancelable(false).setPositiveButton("Enable GPS", new DialogInterface.OnClickListener() {
-                 public void onClick(DialogInterface dialog, int id) {
-                     	
-                       ResourceChecker.openGPSSettings(BaseActivity.this);
-                       BaseActivity.toastGPSStatus();
-                 }
-         }).setNegativeButton("Exit", new DialogInterface.OnClickListener() {
-                 public void onClick(DialogInterface dialog, int id) {
-                         dialog.cancel();
-                         BaseActivity.this.finish();
-                 }
-         }).create().show();
-		}
+		
 	}
 	
 	@Override
@@ -49,8 +35,5 @@ public class BaseActivity extends Activity {
 	}
 	
 
-	private static void toastGPSStatus()
-	{
-		LocationApplication.makeToast("Gps is "+ ResourceChecker.isGPSActivated(LocationApplication.getAppContext()));
-	}
+	
 }
