@@ -1,8 +1,5 @@
 package com.codebase.locationgpstest;
 
-import com.codebase.locationgpstest.app.LocationApplication;
-import com.codebase.locationgpstest.utils.GPSTracker;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
@@ -84,7 +81,7 @@ public class SettingsFragment extends Fragment {
 		Log.e(LocationConstants.TAG_PROJECT,"settings fragment is visible "+visible);
 
         if (visible) {
-            GPSTracker tracker = new GPSTracker(LocationApplication.getAppContext());
+        
 
         }
     }
