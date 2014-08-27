@@ -11,13 +11,13 @@ package com.codebase.locationgpstest.utils;
 
  e	if scan found 
 
- 	cancel all timers
- 	wait for another update
- 	start timer x(for step f)
- 	
- 	
- 	
- 
+ cancel all timers
+ wait for another update
+ start timer x(for step f)
+
+
+
+
  f. if x amount of times reaches redo from a
 
  */
@@ -35,18 +35,19 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
+import android.util.Log;
+import android.widget.Toast;
 
-import com.codebase.locationgpstest.app.LocationApplication;
 import com.codebase.locationgpstest.utils.core.ResourceChecker;
 
 public class LocationUpdater extends Service implements LocationListener {
-
+	public static String TAG_LOCATION_UPDATER = "TAG_LOCATION_UPDATER";
 	public static LocationUpdater locationUpdaterSingleInstance = null;
 
 	private Context appContext;
 
 	private String currentLocationUpdateProvider;
-	private long DELAY_IN_NEXT_SCAN = 1000 * 60 * 1;
+	private long DELAY_IN_NEXT_SCAN = 1000 * 30 * 1;
 	private long LOCATION_UPDATE_FREQUENCY = 0;
 
 	private float LOCATION_UPDATE_MIN_DISTANCE = 0;
@@ -61,7 +62,7 @@ public class LocationUpdater extends Service implements LocationListener {
 		this.locationManager = (LocationManager) appContext
 				.getSystemService(LOCATION_SERVICE);
 		this.locationUpdateHandler = new Handler();
-		LocationApplication.LogError("locationUpdateHandler Constructor");
+		Log.e(TAG_LOCATION_UPDATER, "locationUpdateHandler Constructor");
 
 		setUpScanning(false);
 	}
@@ -111,8 +112,6 @@ public class LocationUpdater extends Service implements LocationListener {
 	}
 
 	private String getSwitchedProvider() {
-		LocationApplication.LogError("Current location provide is "
-				+ currentLocationUpdateProvider);
 
 		if (currentLocationUpdateProvider == null)
 			return getAvailableLocationProvider();
@@ -146,9 +145,8 @@ public class LocationUpdater extends Service implements LocationListener {
 	@Override
 	public void onLocationChanged(Location location) {
 		// TODO Auto-generated method stub
-		
-		LocationApplication.LogError("On Location Found");
-		locationListener.onLocationUpdate(getBestLocationOnUpdate(location));
+
+		locationListener.onLocationUpdate(location);
 		setDelayForNextScan();
 	}
 
@@ -156,8 +154,7 @@ public class LocationUpdater extends Service implements LocationListener {
 	public void onProviderDisabled(String provider) {
 		// TODO Auto-generated method stub
 
-		LocationApplication.LogError("onProviderDisabled povider is "
-				+ provider);
+		Log.e(TAG_LOCATION_UPDATER, "onProviderDisabled povider is " + provider);
 
 	}
 
@@ -165,19 +162,18 @@ public class LocationUpdater extends Service implements LocationListener {
 	public void onProviderEnabled(String provider) {
 		// TODO Auto-generated method stub
 
-		LocationApplication
-				.LogError("onProviderEnabled povider is " + provider);
+		Log.e(TAG_LOCATION_UPDATER,"onProviderEnabled povider is " + provider);
 
 	}
-	
+
 	@Override
 	public void onStatusChanged(String provider, int status, Bundle extras) {
 		// TODO Auto-generated method stub
 
-		LocationApplication.LogError("onStatusChanged povider is " + provider);
+		Log.e(TAG_LOCATION_UPDATER, "onStatusChanged povider is " + provider);
 
 	}
-	
+
 	private void setDelayForNextScan() {
 
 		stopLocationScanning();
@@ -187,7 +183,7 @@ public class LocationUpdater extends Service implements LocationListener {
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
-				LocationApplication.LogError("Time set for next scan ended");
+				Log.e(TAG_LOCATION_UPDATER, "Time set for next scan ended");
 				setUpScanning(false);
 
 			}
@@ -197,10 +193,10 @@ public class LocationUpdater extends Service implements LocationListener {
 	private void setUpScanning(boolean forceToAutoSwitchProviderAfterTimeout) {
 
 		stopLocationScanning();
-		LocationApplication.LogError("On setUpScanning()");
+		Log.e(TAG_LOCATION_UPDATER, "On setUpScanning()");
 		String provider = (forceToAutoSwitchProviderAfterTimeout) ? getSwitchedProvider()
 				: getAvailableLocationProvider();
-		LocationApplication.LogError("Provider is " + provider);
+		Log.e(TAG_LOCATION_UPDATER, "Provider is " + provider);
 		if (provider != null) {
 			locationManager.requestLocationUpdates(provider,
 					LOCATION_UPDATE_FREQUENCY, LOCATION_UPDATE_MIN_DISTANCE,
@@ -214,8 +210,8 @@ public class LocationUpdater extends Service implements LocationListener {
 				// TODO Auto-generated method stub
 
 				// LocationApplication.LogError(");
-				LocationApplication
-						.LogError("Time set for force scan ended so switching provider");
+				Log.e(TAG_LOCATION_UPDATER,
+						"Time set for force scan ended so switching provider");
 				locationListener
 						.onLocationUpdate(getLocationFromAvailableProvider());
 				LocationUpdater.this.setUpScanning(true);
@@ -291,18 +287,17 @@ public class LocationUpdater extends Service implements LocationListener {
 				Settings.ACTION_LOCATION_SOURCE_SETTINGS));
 	}
 
-	public static void startScanning(Context context,boolean switchProvider)
-	{
+	public static void startScanning(Context context, boolean switchProvider) {
 		getSharedLocationUpdater(context).setUpScanning(switchProvider);
 	}
 
-	public static void stopScanning(Context context)
-	{
+	public static void stopScanning(Context context) {
 		getSharedLocationUpdater(context).stopLocationScanning();
 	}
 
 	private static void toastGPSStatus(Context context) {
-		LocationApplication.makeToast("Gps is "
-				+ ResourceChecker.isGPSActivated(context));
+		String message = "Gps is " + ResourceChecker.isGPSActivated(context);
+		Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+
 	}
 }
