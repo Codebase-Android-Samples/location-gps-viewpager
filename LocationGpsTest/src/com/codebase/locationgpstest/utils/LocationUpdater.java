@@ -50,10 +50,10 @@ public class LocationUpdater extends Service implements LocationListener {
 	private long DELAY_IN_NEXT_SCAN = 1000 * 30 * 1;
 	private long LOCATION_UPDATE_FREQUENCY = 0;
 
-	private float LOCATION_UPDATE_MIN_DISTANCE = 0;
+	private float LOCATION_UPDATE_MIN_DISTANCE = 10;
 	private LocationUpdateListner locationListener;
 	private LocationManager locationManager;
-
+	private Location oldLocation;
 	private Handler locationUpdateHandler;
 
 	private LocationUpdater(Context context) {
@@ -67,13 +67,30 @@ public class LocationUpdater extends Service implements LocationListener {
 		setUpScanning(false);
 	}
 
+	private boolean isLocationBeProvided(Location newLocation) {
+		if (oldLocation == null) {
+			oldLocation = newLocation;
+			return true;
+		}
+		float distance = oldLocation.distanceTo(newLocation);
+		if (distance >= LOCATION_UPDATE_MIN_DISTANCE)
+
+		{
+			oldLocation = newLocation;
+			return true;
+		}
+
+		return false;
+
+	}
+
 	private String getAvailableLocationProvider() {
 
 		currentLocationUpdateProvider = LocationManager.NETWORK_PROVIDER;
-		if (this.isGPSLocationUpdatesPossible()) {
-			currentLocationUpdateProvider = LocationManager.GPS_PROVIDER;
-		} else if (this.isNetworkLocationUpdatesPossible()) {
+		if (this.isNetworkLocationUpdatesPossible()) {
 			currentLocationUpdateProvider = LocationManager.NETWORK_PROVIDER;
+		} else if (this.isGPSLocationUpdatesPossible()) {
+			currentLocationUpdateProvider = LocationManager.GPS_PROVIDER;
 		}
 		return currentLocationUpdateProvider;
 	}
@@ -145,8 +162,11 @@ public class LocationUpdater extends Service implements LocationListener {
 	@Override
 	public void onLocationChanged(Location location) {
 		// TODO Auto-generated method stub
+		Location location2 = getBestLocationOnUpdate(location);
 
-		locationListener.onLocationUpdate(location);
+		if (isLocationBeProvided(location2)) {
+			locationListener.onLocationUpdate(location2);
+		}
 		setDelayForNextScan();
 	}
 
@@ -162,7 +182,7 @@ public class LocationUpdater extends Service implements LocationListener {
 	public void onProviderEnabled(String provider) {
 		// TODO Auto-generated method stub
 
-		Log.e(TAG_LOCATION_UPDATER,"onProviderEnabled povider is " + provider);
+		Log.e(TAG_LOCATION_UPDATER, "onProviderEnabled povider is " + provider);
 
 	}
 
@@ -212,8 +232,13 @@ public class LocationUpdater extends Service implements LocationListener {
 				// LocationApplication.LogError(");
 				Log.e(TAG_LOCATION_UPDATER,
 						"Time set for force scan ended so switching provider");
-				locationListener
-						.onLocationUpdate(getLocationFromAvailableProvider());
+
+				Location newLoc = getLocationFromAvailableProvider();
+				if (isLocationBeProvided(newLoc)) {
+					locationListener
+
+					.onLocationUpdate(newLoc);
+				}
 				LocationUpdater.this.setUpScanning(true);
 
 			}
