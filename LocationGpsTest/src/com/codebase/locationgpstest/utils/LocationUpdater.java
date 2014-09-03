@@ -133,9 +133,9 @@ public class LocationUpdater extends Service implements LocationListener {
 		if (currentLocationUpdateProvider == null)
 			return getAvailableLocationProvider();
 		if (currentLocationUpdateProvider
-				.equalsIgnoreCase(LocationManager.GPS_PROVIDER)) {
+				.equalsIgnoreCase(LocationManager.GPS_PROVIDER)&&isNetworkLocationUpdatesPossible()) {
 			currentLocationUpdateProvider = LocationManager.NETWORK_PROVIDER;
-		} else {
+		} else if(isGPSLocationUpdatesPossible()){
 			currentLocationUpdateProvider = LocationManager.GPS_PROVIDER;
 		}
 		return currentLocationUpdateProvider;
