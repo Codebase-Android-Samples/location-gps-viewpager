@@ -28,6 +28,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -44,8 +45,12 @@ public class LocationUpdater extends Service implements LocationListener {
 	public static String TAG_LOCATION_UPDATER = "TAG_LOCATION_UPDATER";
 	public static LocationUpdater locationUpdaterSingleInstance = null;
 
-	private Context appContext;
+	public interface GPSActiveCallback {
+		public void gpsStatusChanged(boolean available);
+	}
 
+	private Context appContext;
+	private GPSActiveCallback gpsActiveCallback;
 	private String currentLocationUpdateProvider;
 	private long DELAY_IN_NEXT_SCAN = 1000 * 30 * 1;
 	private long LOCATION_UPDATE_FREQUENCY = 0;
@@ -64,7 +69,12 @@ public class LocationUpdater extends Service implements LocationListener {
 		this.locationUpdateHandler = new Handler();
 		Log.e(TAG_LOCATION_UPDATER, "locationUpdateHandler Constructor");
 
-		setUpScanning(false);
+	}
+
+	public static void onGpsStatusUpdate(GPSActiveCallback gpsActiveCallback) {
+		LocationUpdater locationUpdater = LocationUpdater
+				.getSharedLocationUpdater();
+		locationUpdater.gpsActiveCallback = gpsActiveCallback;
 	}
 
 	private boolean isLocationBeProvided(Location newLocation) {
@@ -133,9 +143,10 @@ public class LocationUpdater extends Service implements LocationListener {
 		if (currentLocationUpdateProvider == null)
 			return getAvailableLocationProvider();
 		if (currentLocationUpdateProvider
-				.equalsIgnoreCase(LocationManager.GPS_PROVIDER)&&isNetworkLocationUpdatesPossible()) {
+				.equalsIgnoreCase(LocationManager.GPS_PROVIDER)
+				&& isNetworkLocationUpdatesPossible()) {
 			currentLocationUpdateProvider = LocationManager.NETWORK_PROVIDER;
-		} else if(isGPSLocationUpdatesPossible()){
+		} else if (isGPSLocationUpdatesPossible()) {
 			currentLocationUpdateProvider = LocationManager.GPS_PROVIDER;
 		}
 		return currentLocationUpdateProvider;
@@ -165,6 +176,8 @@ public class LocationUpdater extends Service implements LocationListener {
 		Location location2 = getBestLocationOnUpdate(location);
 
 		if (isLocationBeProvided(location2)) {
+
+			Log.e("GPS", "Location Found");
 			locationListener.onLocationUpdate(location2);
 		}
 		setDelayForNextScan();
@@ -252,7 +265,7 @@ public class LocationUpdater extends Service implements LocationListener {
 
 	}
 
-	public static void checkForGpsWithAlert(final Activity activity,
+	public static boolean checkForGpsWithAlert(final Activity activity,
 			String message, String goToSettingsButtonTitle,
 			String cancelButtonTitle) {
 		String aMessage = (message == null) ? "GPS required." : message;
@@ -271,7 +284,7 @@ public class LocationUpdater extends Service implements LocationListener {
 										int id) {
 
 									LocationUpdater.openGPSSettings(activity);
-									LocationUpdater.toastGPSStatus(activity);
+									// LocationUpdater.toastGPSStatus(activity);
 								}
 							})
 					.setNegativeButton(aCancelButtonTitle,
@@ -283,12 +296,19 @@ public class LocationUpdater extends Service implements LocationListener {
 								}
 							}).create().show();
 		}
+
+		return LocationUpdater.isGPSActivated(activity);
 	}
 
 	public static LocationUpdater getSharedLocationUpdater(Context context) {
 		if (locationUpdaterSingleInstance == null) {
 			locationUpdaterSingleInstance = new LocationUpdater(context);
 		}
+
+		return locationUpdaterSingleInstance;
+	}
+
+	public static LocationUpdater getSharedLocationUpdater() {
 
 		return locationUpdaterSingleInstance;
 	}
@@ -301,10 +321,45 @@ public class LocationUpdater extends Service implements LocationListener {
 	}
 
 	public static boolean isGPSActivated(Context context) {
+		PackageManager pm = context.getPackageManager();
+		boolean hasGps = pm
+				.hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
 
-		return ((LocationManager) context
-				.getSystemService(Context.LOCATION_SERVICE))
-				.isProviderEnabled(LocationManager.GPS_PROVIDER);
+		return hasGps
+				&& ((LocationManager) context
+						.getSystemService(Context.LOCATION_SERVICE))
+						.isProviderEnabled(LocationManager.GPS_PROVIDER);
+	}
+
+	public static void updateGpsStatus(Context context) {
+		LocationUpdater locationUpdater = LocationUpdater
+				.getSharedLocationUpdater();
+
+		locationUpdater.notifyGPSActiveCallback();
+	}
+
+	public static boolean isGpsSensorPresent(Context context,
+			boolean showAlert, String message) {
+		PackageManager pm = context.getPackageManager();
+		boolean hasGps = pm
+				.hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
+		Toast.makeText(context, "Has GPS Sensor " + hasGps, Toast.LENGTH_LONG)
+				.show();
+		if (!hasGps && showAlert) {
+			new AlertDialog.Builder(context)
+					.setMessage(message)
+					.setCancelable(false)
+
+					.setNegativeButton("Ok",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int id) {
+									dialog.cancel();
+
+								}
+							}).create().show();
+		}
+		return hasGps;
 	}
 
 	public static void openGPSSettings(Activity activity) {
@@ -324,5 +379,18 @@ public class LocationUpdater extends Service implements LocationListener {
 		String message = "Gps is " + ResourceChecker.isGPSActivated(context);
 		Toast.makeText(context, message, Toast.LENGTH_LONG).show();
 
+	}
+
+	private void notifyGPSActiveCallback() {
+		if (gpsActiveCallback != null) {
+			gpsActiveCallback.gpsStatusChanged(isGPSLocationUpdatesPossible());
+		}
+	}
+
+	public static Location getLastKnownLocation() {
+		LocationUpdater locationUpdater = LocationUpdater
+				.getSharedLocationUpdater();
+
+		return locationUpdater.getLocationFromAvailableProvider();
 	}
 }
