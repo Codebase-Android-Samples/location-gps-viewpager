@@ -325,10 +325,13 @@ public class LocationUpdater extends Service implements LocationListener {
 		boolean hasGps = pm
 				.hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
 
-		return hasGps
+		boolean hasActivated = hasGps
 				&& ((LocationManager) context
 						.getSystemService(Context.LOCATION_SERVICE))
 						.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+		toastGPSStatus(context);
+		return hasActivated;
 	}
 
 	public static void updateGpsStatus(Context context) {
