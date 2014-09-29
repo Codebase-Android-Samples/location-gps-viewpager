@@ -22,6 +22,10 @@ package com.codebase.locationgpstest.utils;
 
  */
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Service;
@@ -29,6 +33,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -395,5 +401,40 @@ public class LocationUpdater extends Service implements LocationListener {
 				.getSharedLocationUpdater();
 
 		return locationUpdater.getLocationFromAvailableProvider();
+	}
+
+	public String ConvertPointToLocation(Location location) {
+
+		if(location==null)
+			return "";
+		if(location.getLatitude()==0&&location.getLongitude()==0)
+			return "";
+		String address = "";
+
+		Geocoder geoCoder = new Geocoder(appContext, Locale.getDefault());
+		try {
+
+			List<Address> addresses = geoCoder.getFromLocation(
+					location.getLatitude(), location.getLongitude(), 1);
+
+			if (addresses.size() > 0) {
+				for (int index = 0; index < addresses.get(0)
+						.getMaxAddressLineIndex(); index++)
+					address += addresses.get(0).getAddressLine(index) + " ";
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return address;
+	}
+
+	public static String getLastLocationName() {
+		LocationUpdater locationUpdater = LocationUpdater
+				.getSharedLocationUpdater();
+		if (locationUpdater == null)
+			return "";
+		return locationUpdater.ConvertPointToLocation(LocationUpdater
+				.getLastKnownLocation());
 	}
 }
