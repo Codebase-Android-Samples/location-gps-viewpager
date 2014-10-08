@@ -48,21 +48,24 @@ import android.widget.Toast;
 import com.codebase.locationgpstest.utils.core.ResourceChecker;
 
 public class LocationUpdater extends Service implements LocationListener {
+	
+	
+	public interface LocationFoundListner {
+
+		public void onLocationUpdate(Location location);
+		
+	}
 	public static String TAG_LOCATION_UPDATER = "TAG_LOCATION_UPDATER";
 	public static LocationUpdater locationUpdaterSingleInstance = null;
 
-	public interface GPSActiveCallback {
-		public void gpsStatusChanged(boolean available);
-	}
-
 	private Context appContext;
-	private GPSActiveCallback gpsActiveCallback;
+	
 	private String currentLocationUpdateProvider;
 	private long DELAY_IN_NEXT_SCAN = 1000 * 30 * 1;
 	private long LOCATION_UPDATE_FREQUENCY = 0;
 
 	private float LOCATION_UPDATE_MIN_DISTANCE = 10;
-	private LocationUpdateListner locationListener;
+	private LocationFoundListner locationListener;
 	private LocationManager locationManager;
 	private Location oldLocation;
 	private Handler locationUpdateHandler;
@@ -77,11 +80,7 @@ public class LocationUpdater extends Service implements LocationListener {
 
 	}
 
-	public static void onGpsStatusUpdate(GPSActiveCallback gpsActiveCallback) {
-		LocationUpdater locationUpdater = LocationUpdater
-				.getSharedLocationUpdater();
-		locationUpdater.gpsActiveCallback = gpsActiveCallback;
-	}
+	
 
 	private boolean isLocationBeProvided(Location newLocation) {
 		if (oldLocation == null) {
@@ -320,7 +319,7 @@ public class LocationUpdater extends Service implements LocationListener {
 	}
 
 	public static void getUpdate(Context context,
-			LocationUpdateListner aLocationListener) {
+			LocationFoundListner aLocationListener) {
 		LocationUpdater locationUpdater = LocationUpdater
 				.getSharedLocationUpdater(context);
 		locationUpdater.locationListener = aLocationListener;
@@ -345,6 +344,7 @@ public class LocationUpdater extends Service implements LocationListener {
 				.getSharedLocationUpdater();
 
 		locationUpdater.notifyGPSActiveCallback();
+
 	}
 
 	public static boolean isGpsSensorPresent(Context context,
@@ -391,9 +391,13 @@ public class LocationUpdater extends Service implements LocationListener {
 	}
 
 	private void notifyGPSActiveCallback() {
-		if (gpsActiveCallback != null) {
-			gpsActiveCallback.gpsStatusChanged(isGPSLocationUpdatesPossible());
+
+		if (isGPSLocationUpdatesPossible()) {
+			LocationUpdateNotifier.notifyLocationAvailable(appContext);
+		} else {
+			LocationUpdateNotifier.notifyLocationUnAvailable(appContext);
 		}
+
 	}
 
 	public static Location getLastKnownLocation() {
@@ -405,9 +409,10 @@ public class LocationUpdater extends Service implements LocationListener {
 
 	public String ConvertPointToLocation(Location location) {
 
-		if(location==null)
+		
+		if (location == null)
 			return "";
-		if(location.getLatitude()==0&&location.getLongitude()==0)
+		if (location.getLatitude() == 0 && location.getLongitude() == 0)
 			return "";
 		String address = "";
 
@@ -437,4 +442,5 @@ public class LocationUpdater extends Service implements LocationListener {
 		return locationUpdater.ConvertPointToLocation(LocationUpdater
 				.getLastKnownLocation());
 	}
+
 }
