@@ -48,18 +48,18 @@ import android.widget.Toast;
 import com.codebase.locationgpstest.utils.core.ResourceChecker;
 
 public class LocationUpdater extends Service implements LocationListener {
-	
-	
+
 	public interface LocationFoundListner {
 
 		public void onLocationUpdate(Location location);
-		
+
 	}
+
 	public static String TAG_LOCATION_UPDATER = "TAG_LOCATION_UPDATER";
 	public static LocationUpdater locationUpdaterSingleInstance = null;
 
 	private Context appContext;
-	
+
 	private String currentLocationUpdateProvider;
 	private long DELAY_IN_NEXT_SCAN = 1000 * 30 * 1;
 	private long LOCATION_UPDATE_FREQUENCY = 0;
@@ -79,8 +79,6 @@ public class LocationUpdater extends Service implements LocationListener {
 		Log.e(TAG_LOCATION_UPDATER, "locationUpdateHandler Constructor");
 
 	}
-
-	
 
 	private boolean isLocationBeProvided(Location newLocation) {
 		if (oldLocation == null) {
@@ -335,7 +333,6 @@ public class LocationUpdater extends Service implements LocationListener {
 						.getSystemService(Context.LOCATION_SERVICE))
 						.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
-		toastGPSStatus(context);
 		return hasActivated;
 	}
 
@@ -352,8 +349,7 @@ public class LocationUpdater extends Service implements LocationListener {
 		PackageManager pm = context.getPackageManager();
 		boolean hasGps = pm
 				.hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
-		Toast.makeText(context, "Has GPS Sensor " + hasGps, Toast.LENGTH_LONG)
-				.show();
+
 		if (!hasGps && showAlert) {
 			new AlertDialog.Builder(context)
 					.setMessage(message)
@@ -409,7 +405,6 @@ public class LocationUpdater extends Service implements LocationListener {
 
 	public String ConvertPointToLocation(Location location) {
 
-		
 		if (location == null)
 			return "";
 		if (location.getLatitude() == 0 && location.getLongitude() == 0)
